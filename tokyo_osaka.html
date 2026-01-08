@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tokyo + Osaka 住宿 CP 值地圖</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial;
+  }
+  .wrap {
+    display: flex;
+    height: 100%;
+  }
+  .sidebar {
+    width: 380px;
+    min-width: 320px;
+    max-width: 520px;
+    background: #0f172a;
+    color: #e5e7eb;
+    border-right: 1px solid rgba(255,255,255,.08);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar header {
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .controls {
+    display: grid;
+    gap: 8px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 8px;
+  }
+  input, select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color: #e5e7eb;
+    outline: none;
+  }
+  .cityfilter {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+    opacity: .95;
+  }
+  .list {
+    overflow: auto;
+    padding: 10px;
+  }
+  .card {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    cursor: pointer;
+  }
+  .thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: rgba(255,255,255,.06);
+  }
+  .name {
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+  .meta {
+    display: flex;
+    gap: 10px;
+    font-size: 13px;
+    opacity: .95;
+    flex-wrap: wrap;
+  }
+  .tag {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.08);
+  }
+  .muted {
+    opacity: .75;
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  #map {
+    flex: 1;
+  }
+  a {
+    color: #93c5fd;
+    text-decoration: none;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <aside class="sidebar">
+    <header>
+      <div class="title">Tokyo + Osaka 日本住宿 CP 值地圖</div>
+      <div class="controls">
+        <div class="row">
+          <input id="q" placeholder="搜尋飯店名稱..."/>
+          <select id="sort">
+            <option value="cp">CP值（大→小）</option>
+            <option value="price">價格（小→大）</option>
+            <option value="score">評分（大→小）</option>
+            <option value="name">名稱（A→Z）</option>
+          </select>
+        </div>
+        <div class="cityfilter">
+          <label><input type="checkbox" id="ckTokyo" checked> Tokyo</label>
+          <label><input type="checkbox" id="ckOsaka" checked> Osaka</label>
+          <span id="count" style="margin-left:auto; opacity:.85;"></span>
+        </div>
+      </div>
+    </header>
+    <div class="list" id="list"></div>
+  </aside>
+
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script id="data" type="application/json">[{"id": 0, "name": "淺草東武飯店(Asakusa Tobu Hotel)", "city": "Tokyo", "lat": 35.711385, "lon": 139.797425, "price": "2603.0", "score": "9.3", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc3t12000bqgg42bD81D_R_600_600_R5_D.jpg", "url": ""}, {"id": 1, "name": "東京秋葉原N+飯店（2號店）(N+HOTEL Akihabara No.2)", "city": "Tokyo", "lat": 35.696205, "lon": 139.77892, "price": "1467.0", "score": "9.0", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc1112000bpkwrkf289E_R_600_600_R5_D.jpg", "url": ""}, {"id": 2, "name": "旅之棲淺草飯店(HOTEL TAVINOS Asakusa)", "city": "Tokyo", "lat": 35.716359, "lon": 139.792865, "price": "1140.0", "score": "8.7", "cp": null, "img": "https://ak-d.tripcdn.com/images/0206e120005amovqeF39F_R_600_600_R5_D.jpg", "url": ""}, {"id": 3, "name": "東京築地銀座 KOKO飯店(Koko Hotel Tsukiji Ginza)", "city": "Tokyo", "lat": 35.664786, "lon": 139.77323, "price": "1851.0", "score": "8.6", "cp": null, "img": "https://ak-d.tripcdn.com/images/0200c120009cjtvnuD248_R_600_600_R5_D.jpg", "url": ""}, {"id": 4, "name": "千禧 三井花園飯店 東京 / 銀座(Millennium Mitsui Garden Hotel Tokyo - Ginza)", "city": "Tokyo", "lat": 35.669876, "lon": 139.766126, "price": "5538.0", "score": "9.4", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc4h12000j3uaanz993F_R_600_600_R5_D.jpg", "url": ""}, {"id": 5, "name": "三井花園飯店六本木普米爾(Mitsui Garden Hotel Roppongi Tokyo Premier)", "city": "Tokyo", "lat": 35.662059, "lon": 139.736, "price": "2823.0", "score": "9.0", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc2v12000o47uum1C42D_R_600_600_R5_D.jpg", "url": ""}, {"id": 6, "name": "東京半藏門蒙特利飯店(Hotel Monterey Hanzomon)", "city": "Tokyo", "lat": 35.686602, "lon": 139.74212, "price": "1768.0", "score": "9.2", "cp": null, "img": "https://ak-d.tripcdn.com/images/220s0w000000ktqti8FF4_R_600_600_R5_D.jpg", "url": ""}, {"id": 7, "name": "東京上野御徒町芬迪別墅飯店(Hotel Villa Fontaine Tokyo-Ueno Okachimachi)", "city": "Tokyo", "lat": 35.705361, "lon": 139.781809, "price": "1695.0", "score": "8.8", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc6j12000b8w3mnj0CAD_R_600_600_R5_D.jpg", "url": ""}, {"id": 8, "name": "MYSTAYS 日暮裡飯店(HOTEL MYSTAYS Nippori)", "city": "Tokyo", "lat": 35.727624, "lon": 139.774211, "price": "1484.0", "score": "8.7", "cp": null, "img": "https://ak-d.tripcdn.com/images/0225n12000ar8nw82B23D_R_600_600_R5_D.jpg", "url": ""}, {"id": 9, "name": "三井花園飯店日本橋普米爾 / 東京(Mitsui Garden Hotel Nihonbashi Premier / Tokyo)", "city": "Tokyo", "lat": 35.688135, "lon": 139.773467, "price": "6029.0", "score": "9.5", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc2t12000ii9vun57B83_R_600_600_R5_D.jpg", "url": ""}, {"id": 10, "name": "東上野ELE飯店(ELE Hotel Higashiueno)", "city": "Tokyo", "lat": 35.712574, "lon": 139.784411, "price": "1187.0", "score": "8.4", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc6c12000cvb433zECA5_R_600_600_R5_D.jpg", "url": ""}, {"id": 11, "name": "一五大阪難波黑門飯店(The OneFive Osaka Namba Kuromon)", "city": "Osaka", "lat": 34.665544, "lon": 135.505837, "price": "891.0", "score": "8.8", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc6p12000bvtjxaq2ABC_R_600_600_R5_D.jpg", "url": ""}, {"id": 12, "name": "大阪恵美須飯店(Osaka Ebisu Hotel)", "city": "Osaka", "lat": 34.653542, "lon": 135.505738, "price": "1042.0", "score": "8.9", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc5a12000gngxmxhE4F3_R_600_600_R5_D.jpg", "url": ""}, {"id": 13, "name": "大阪日航飯店(Hotel Nikko Osaka)", "city": "Osaka", "lat": 34.6739, "lon": 135.499711, "price": "2536.0", "score": "9.3", "cp": null, "img": "https://ak-d.tripcdn.com/images/0200k120008ehc3wq7AAD_R_600_600_R5_D.jpg", "url": ""}, {"id": 14, "name": "大阪塔樓光芒飯店（CANDEO HOTELS）(Candeo Hotels Osaka The Tower)", "city": "Osaka", "lat": 34.695432, "lon": 135.500521, "price": "5489.0", "score": "8.9", "cp": null, "img": "https://ak-d.tripcdn.com/images/0223412000e26loajCF12_R_600_600_R5_D.jpg", "url": ""}, {"id": 15, "name": "一五飯店大阪難波道頓堀店(The OneFive Osaka Namba Dotonbori)", "city": "Osaka", "lat": 34.669675, "lon": 135.504928, "price": "945.0", "score": "8.2", "cp": null, "img": "https://ak-d.tripcdn.com/images/1mc5c12000eh6y6ys5F28_R_600_600_R5_D.jpg", "url": ""}, {"id": 16, "name": "大阪康萊德飯店(Conrad Osaka)", "city": "Osaka", "lat": 34.693536, "lon": 135.495722, "price": "19300.0", "score": "9.4", "cp": null, "img": "https://ak-d.tripcdn.com/images/22090r000000gxlh87EF0_R_600_600_R5_D.jpg", "url": ""}]</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+
+function toNum(x) {
+  if (x === null || x === undefined) return NaN;
+  const s = String(x).replace(/[^0-9.\-]/g,'');
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+const map = L.map('map').setView([35.33485852941176, 138.26547300000004], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+const layerTokyo = L.layerGroup().addTo(map);
+const layerOsaka = L.layerGroup().addTo(map);
+const markers = new Map(); // id -> marker
+
+function popupHtml(h) {
+  const name = h.name || '';
+  const city = h.city || '';
+  const price = h.price ? `<div class="tag">💰 ${h.price}</div>` : '';
+  const score = h.score ? `<div class="tag">⭐ ${h.score}</div>` : '';
+  const cp = h.cp ? `<div class="tag">📊 ${h.cp}</div>` : '';
+  const url = h.url ? `<div style="margin-top:6px;"><a href="${h.url}" target="_blank" rel="noopener">開啟頁面</a></div>` : '';
+  const img = h.img ? `<img src="${h.img}" style="width:100%;border-radius:10px;margin-top:8px;" />` : '';
+  return `
+    <div style="min-width:220px;">
+      <div style="font-weight:900;">${name}</div>
+      <div style="opacity:.8; margin:4px 0 6px;">${city}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${price}${score}${cp}</div>
+      ${url}
+      ${img}
+    </div>
+  `;
+}
+
+function rebuildMarkers(list) {
+  layerTokyo.clearLayers();
+  layerOsaka.clearLayers();
+  markers.clear();
+
+  for (const h of list) {
+    const m = L.marker([h.lat, h.lon]);
+    m.bindPopup(popupHtml(h));
+    if (h.city === 'Tokyo') m.addTo(layerTokyo);
+    else m.addTo(layerOsaka);
+    markers.set(h.id, m);
+  }
+}
+
+function cardHtml(h) {
+  const img = h.img ? h.img : '';
+  const thumb = img ? `<img class="thumb" src="${img}"/>` : `<div class="thumb"></div>`;
+
+  // 注意：這裡是 JS template literal，Python f-string 裡要寫 ${...} 才不會被 Python 吃掉
+  const priceTag = h.price ? `<span class="tag">💰 ${h.price}</span>` : '';
+  const scoreTag = h.score ? `<span class="tag">⭐ ${h.score}</span>` : '';
+  const cpTag = h.cp ? `<span class="tag">📊 ${h.cp}</span>` : '';
+  const url = h.url ? `<a href="${h.url}" target="_blank" rel="noopener">開啟</a>` : '';
+
+  return `
+    <div class="card" data-id="${h.id}">
+      ${thumb}
+      <div>
+        <div class="name">${h.name || ''}</div>
+        <div class="meta">
+          <span class="tag">${h.city || ''}</span>
+          ${priceTag} ${scoreTag} ${cpTag}
+        </div>
+        <div class="muted">${url}</div>
+      </div>
+    </div>
+  `;
+}
+
+function applyFilterSort() {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const showTokyo = document.getElementById('ckTokyo').checked;
+  const showOsaka = document.getElementById('ckOsaka').checked;
+  const sortKey = document.getElementById('sort').value;
+
+  let list = DATA.filter(h => {
+    if (h.city === 'Tokyo' && !showTokyo) return false;
+    if (h.city === 'Osaka' && !showOsaka) return false;
+    if (q && !(h.name || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  list.sort((a,b) => {
+    if (sortKey === 'name') return (a.name||'').localeCompare(b.name||'');
+    if (sortKey === 'price') return (toNum(a.price) - toNum(b.price));
+    if (sortKey === 'score') return (toNum(b.score) - toNum(a.score));
+    // default cp desc
+    return (toNum(b.cp) - toNum(a.cp));
+  });
+
+  document.getElementById('count').textContent = `${list.length} 間`;
+
+  // sidebar
+  const listEl = document.getElementById('list');
+  listEl.innerHTML = list.map(cardHtml).join('');
+
+  // markers
+  rebuildMarkers(list);
+
+  // click card -> pan + open popup
+  document.querySelectorAll('.card').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = parseInt(el.getAttribute('data-id'), 10);
+      const m = markers.get(id);
+      if (!m) return;
+      map.setView(m.getLatLng(), 13, {animate:true});
+      m.openPopup();
+    });
+  });
+}
+
+document.getElementById('q').addEventListener('input', applyFilterSort);
+document.getElementById('sort').addEventListener('change', applyFilterSort);
+document.getElementById('ckTokyo').addEventListener('change', applyFilterSort);
+document.getElementById('ckOsaka').addEventListener('change', applyFilterSort);
+
+applyFilterSort();
+</script>
+</body>
+</html>
